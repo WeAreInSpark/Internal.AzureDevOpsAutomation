@@ -1,15 +1,15 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using AdoStateProcessor.Repos.Interfaces;
 using AdoStateProcessor.Misc;
 using AdoStateProcessor.Processor;
+using AdoStateProcessor.Repos.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace ADOStateChangeHTTPFunction
 {
@@ -18,44 +18,46 @@ namespace ADOStateChangeHTTPFunction
         private readonly IWorkItemRepo _workItemRepo;
         private readonly IRulesRepo _rulesRepo;
         private readonly IHelper _helper;
+        private readonly ILogger<AdoStateChangeHttpFunction> _logger;
 
-        public AdoStateChangeHttpFunction(IWorkItemRepo workItemRepo, IRulesRepo rulesRepo, IHelper helper)
+        public AdoStateChangeHttpFunction(
+            IWorkItemRepo workItemRepo,
+            IRulesRepo rulesRepo,
+            IHelper helper,
+            ILogger<AdoStateChangeHttpFunction> logger)
         {
             _workItemRepo = workItemRepo;
             _rulesRepo = rulesRepo;
             _helper = helper;
+            _logger = logger;
         }
 
-        [FunctionName("AdoStateChangeHttpFunction")]
+        [Function("AdoStateChangeHttpFunction")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            ILogger log, ExecutionContext context)
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            log.LogInformation(" C# HTTP trigger function processed a request.");
+            _logger.LogInformation(" C# HTTP trigger function processed a request.");
+            
             //make sure pat is not empty
-            string pat = System.Environment.GetEnvironmentVariable("ADO_PAT", EnvironmentVariableTarget.Process);
+            string pat = Environment.GetEnvironmentVariable("ADO_PAT");
             if (string.IsNullOrEmpty(pat))
             {
-                log.LogWarning(" Pat not found in env Process, trying user level");
-                pat = System.Environment.GetEnvironmentVariable("ADO_PAT", EnvironmentVariableTarget.User);
-            }
-            if (string.IsNullOrEmpty(pat))
-            {
-                log.LogCritical(" Pat not found to process, exiting");
+                _logger.LogCritical(" Pat not found to process, exiting");
                 return new BadRequestObjectResult("Pat not found to process, exiting");
             }
+            
             //make sure processType is not empty, otherwise default to scrum
-            string processType = System.Environment.GetEnvironmentVariable("ADO_PROCESS_TYPE", EnvironmentVariableTarget.Process);
-            processType = string.IsNullOrEmpty(processType) ? System.Environment.GetEnvironmentVariable("ADO_PROCESS_TYPE", EnvironmentVariableTarget.User) : "scrum";
-            log.LogInformation(" ProcessType:"+processType);
+            string processType = Environment.GetEnvironmentVariable("ADO_PROCESS_TYPE") ?? "scrum";
+            _logger.LogInformation(" ProcessType:" + processType);
+            
             //Parse request body as JObject
             JObject payload = JObject.Parse(requestBody);
 
             // Need to read the rules file from the rules folder in current context
-            string functionAppCurrDirectory = context.FunctionAppDirectory;
+            string functionAppCurrDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            var adoEngine = new AdoProcessor(_workItemRepo, _rulesRepo, _helper, log);
+            var adoEngine = new AdoProcessor(_workItemRepo, _rulesRepo, _helper, _logger);
 
             Task.WaitAll(
                 adoEngine.ProcessUpdate(payload, pat, functionAppCurrDirectory, processType));

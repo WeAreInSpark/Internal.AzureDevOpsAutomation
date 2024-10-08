@@ -7,6 +7,6 @@ namespace AdoStateProcessor.Repos.Interfaces
 {
     public interface IRulesRepo
     {
-        Task<RulesModel> ListRules(string wit, string wiDirectory, string processType);
+        public RulesModel LoadProcessTypeRules(string workItemType, string workItemDirectory);
     }
 }

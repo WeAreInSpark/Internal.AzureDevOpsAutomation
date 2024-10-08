@@ -1,9 +1,11 @@
+using AdoStateChangeHttpFunction.Mappers;
 using AdoStateProcessor.Misc;
 using AdoStateProcessor.Processor;
 using AdoStateProcessor.Repos.Interfaces;
-using Microsoft.AspNetCore.Http;
+using AdoStateProcessor.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,62 +15,35 @@ using System.Threading.Tasks;
 
 namespace ADOStateChangeHTTPFunction
 {
-    public class AdoStateChangeHttpFunction
+    public class AdoStateChangeHttpFunction(
+        IWorkItemRepo workItemRepo,
+        IRulesRepo rulesRepo,
+        IHelper helper,
+        ILogger<AdoStateChangeHttpFunction> logger)
     {
-        private readonly IWorkItemRepo _workItemRepo;
-        private readonly IRulesRepo _rulesRepo;
-        private readonly IHelper _helper;
-        private readonly ILogger<AdoStateChangeHttpFunction> _logger;
-
-        public AdoStateChangeHttpFunction(
-            IWorkItemRepo workItemRepo,
-            IRulesRepo rulesRepo,
-            IHelper helper,
-            ILogger<AdoStateChangeHttpFunction> logger)
-        {
-            _workItemRepo = workItemRepo;
-            _rulesRepo = rulesRepo;
-            _helper = helper;
-            _logger = logger;
-        }
-
         [Function("AdoStateChangeHttpFunction")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req)
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req)
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            _logger.LogInformation(" C# HTTP trigger function processed a request.");
-            
-            //make sure pat is not empty
-            string pat = Environment.GetEnvironmentVariable("ADO_PAT");
-            if (string.IsNullOrEmpty(pat))
-            {
-                _logger.LogCritical(" Pat not found to process, exiting");
-                return new BadRequestObjectResult("Pat not found to process, exiting");
-            }
-            
-            //make sure processType is not empty, otherwise default to scrum
-            string processType = Environment.GetEnvironmentVariable("ADO_PROCESS_TYPE") ?? "scrum";
-            _logger.LogInformation(" ProcessType:" + processType);
-            
-            //Parse request body as JObject
-            JObject payload = JObject.Parse(requestBody);
+            string requestBody = await req.ReadAsStringAsync();
 
-            // Need to read the rules file from the rules folder in current context
             string functionAppCurrDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            var adoEngine = new AdoProcessor(_workItemRepo, _rulesRepo, _helper, _logger);
+            WorkItemDto workItemRequest = WorkItemMapper.Map(requestBody);
 
-            Task.WaitAll(
-                adoEngine.ProcessUpdate(payload, pat, functionAppCurrDirectory, processType));
+            if (workItemRequest.EventType != "workitem.updated")
+            {
+                logger.LogCritical("Work item was not updated, yet the trigger somehow triggered. Ignoring request.");
+                return new BadRequestObjectResult("Work item was not updated, yet the trigger somehow triggered. Ignoring request.");
+            }
+
+            var adoEngine = new AdoProcessor(workItemRepo, rulesRepo, helper, logger);
+
+            await adoEngine.ProcessUpdate(workItemRequest, functionAppCurrDirectory);
 
             string responseMessage = "This HTTP triggered function executed successfully.";
 
             return new OkObjectResult(responseMessage);
         }
-
     }
-
-
-
 }

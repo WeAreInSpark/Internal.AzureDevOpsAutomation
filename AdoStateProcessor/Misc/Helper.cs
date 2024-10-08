@@ -1,26 +1,20 @@
 ﻿using System;
 
-
 namespace AdoStateProcessor.Misc
 {
     public class Helper : IHelper
     {
-        public Int32 GetWorkItemIdFromUrl(string url)
+        public int GetWorkItemIdFromUrl(string url)
         {
-            Int32 lastIndexOf = url.LastIndexOf("/");
-            Int32 size = url.Length - (lastIndexOf + 1);
+            int lastIndexOf = url.LastIndexOf("/");
+            int size = url.Length - (lastIndexOf + 1);
 
             string value = url.Substring(lastIndexOf + 1, size);
 
-            return Convert.ToInt32(value);
+            if (!int.TryParse(value, out var workItemId))
+                throw new ArgumentException("Invalid work item id");
+
+            return workItemId;
         }
     }
-
-    public interface IHelper
-    {
-        Int32 GetWorkItemIdFromUrl(string url);
-
-    }
-
-
 }

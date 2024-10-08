@@ -11,109 +11,75 @@ using AdoStateProcessor.Misc;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using System.Threading.Tasks;
 using AdoStateProcessor.Repos.Interfaces;
+using AdoStateProcessor.Factories;
+using AdoStateProcessor.ViewModels;
 
 namespace AdoStateProcessor.Repos
 {
-    public class WorkItemRepo : IWorkItemRepo, IDisposable
+    public class WorkItemRepo(IAdoFactory adoFactory, IHelper helper) : IWorkItemRepo
     {
-        private IHelper _helper;
+        private readonly IHelper _helper = helper;
+        private readonly IVssConnection _connection = adoFactory.Create();
 
-        public WorkItemRepo(IHelper helper)
+        public async Task<WorkItem> GetWorkItem(int id)
         {
-            _helper = helper;
-        }
-
-        public async Task<WorkItem> GetWorkItem(VssConnection connection, int id)
-        {
-            var client = connection.GetClient<WorkItemTrackingHttpClient>();
+            var client = _connection.GetClient<WorkItemTrackingHttpClient>();
             try
             {
                 return await client.GetWorkItemAsync(id, null, null, WorkItemExpand.Relations);
-
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("Exception e:"+ e.GetBaseException());
+                Console.WriteLine("Exception e:" + e.GetBaseException());
                 return null;
             }
         }
 
-        public async Task<List<WorkItem>> ListChildWorkItemsForParent(VssConnection connection, WorkItem parentWorkItem)
+        public async Task<List<WorkItem>> ListChildWorkItemsForParent(WorkItem parentWorkItem)
         {
-            var client = connection.GetClient<WorkItemTrackingHttpClient>();
+            var client = _connection.GetClient<WorkItemTrackingHttpClient>();
 
-            // get all the related child work item links
-            IEnumerable<WorkItemRelation> children = parentWorkItem.Relations.Where<WorkItemRelation>(x => x.Rel.Equals("System.LinkTypes.Hierarchy-Forward"));
-            IList<int> Ids = new List<int>();
+            var childrenIds = parentWorkItem.Relations.Where(x => x.Rel.Equals("System.LinkTypes.Hierarchy-Forward"))
+                                            .Select(x => _helper.GetWorkItemIdFromUrl(x.Url)).ToList();
 
-            // loop through children and extract the id's the from the url
-            foreach (var child in children)
-            {
-                Ids.Add(_helper.GetWorkItemIdFromUrl(child.Url));
-            }
-
-            // in this case we only care about the state of the child work items
             string[] fields = new string[] { "System.State" };
 
-            // go get the full list of child work items with the desired fields
-            return await client.GetWorkItemsAsync(Ids, fields);
+            return await client.GetWorkItemsAsync(childrenIds, fields);
         }
 
-        public async Task<WorkItem> UpdateWorkItemState(VssConnection connection, WorkItem workItem, string state)
+        public async Task<WorkItem> UpdateWorkItemState(WorkItem workItem, string state)
         {
-            JsonPatchDocument patchDocument = new JsonPatchDocument();
-            patchDocument.Add(
+            JsonPatchDocument patchDocument = new JsonPatchDocument
+            {
                 new JsonPatchOperation()
                 {
                     Operation = Operation.Test,
                     Path = "/rev",
                     Value = workItem.Rev.ToString()
-                }
-            );
-
-            patchDocument.Add(
+                },
                 new JsonPatchOperation()
                 {
                     Operation = Operation.Add,
                     Path = "/fields/System.State",
                     Value = state
                 }
-            );
+            };
 
-            WorkItem result = null;
-
-            var client = connection.GetClient<WorkItemTrackingHttpClient>();
             try
             {
-                result = await client.UpdateWorkItemAsync(patchDocument, Convert.ToInt32(workItem.Id));
+                var client = _connection.GetClient<WorkItemTrackingHttpClient>();
+                return await client.UpdateWorkItemAsync(patchDocument, Convert.ToInt32(workItem.Id));
             }
             catch (Exception)
             {
-                result = null;
+                return null;
             }
-            return result;
         }
-
-        public void Dispose()
+        public async Task<WorkItemRelation> GetWorkItemParent(int workItemId)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            var workItem = await GetWorkItem(workItemId) ?? throw new ApplicationException("Failed to get work item.");
 
-        ~WorkItemRepo()
-        {
-            // Finalizer calls Dispose(false)
-            Dispose(false);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _helper = null;
-            }
+            return workItem.Relations.Where(x => x.Rel.Equals("System.LinkTypes.Hierarchy-Reverse")).FirstOrDefault() ?? throw new ApplicationException("Failed to get related items.");
         }
     }
-
-
 }

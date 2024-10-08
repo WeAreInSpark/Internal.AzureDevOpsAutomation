@@ -2,6 +2,7 @@
 using AdoStateProcessor.Repos.Interfaces;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System.IO;
 
 namespace AdoStateProcessor.Repos
@@ -17,7 +18,12 @@ namespace AdoStateProcessor.Repos
 
             string ruleFile = Path.Combine(workItemDirectory, srcPathRules, $"rules.{workItemType.ToLower()}.json");
 
-            return JsonConvert.DeserializeObject<RulesModel>(File.ReadAllText(ruleFile)); ;
+            var converterOptions = new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
+
+            return JsonConvert.DeserializeObject<RulesModel>(File.ReadAllText(ruleFile), converterOptions);
         }
     }
 }

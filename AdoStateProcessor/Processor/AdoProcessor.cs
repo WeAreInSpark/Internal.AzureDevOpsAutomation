@@ -1,14 +1,12 @@
+using AdoStateProcessor.Models;
+using AdoStateProcessor.Repos.Interfaces;
+using AdoStateProcessor.ViewModels;
+using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using AdoStateProcessor.Repos.Interfaces;
-using AdoStateProcessor.Misc;
-using AdoStateProcessor.ViewModels;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using AdoStateProcessor.Models;
-using System.Collections.Generic;
-using AdoStateProcessor.Repos;
 
 namespace AdoStateProcessor.Processor
 {
@@ -71,7 +69,7 @@ namespace AdoStateProcessor.Processor
 
         private static bool IsMatchingRuleForWorkItem(WorkItemDto workItemRequest, Rule rule)
         {
-            return workItemRequest.GetType().GetProperties().Any(x => x.Name == rule.IfActorFieldType.ToString() && x.GetValue(workItemRequest).ToString() == rule.AndActorFieldValue.ToString());
+            return workItemRequest.GetType().GetProperties().Any(x => x.Name == rule.IfActorFieldType.ToString() && x.GetValue(workItemRequest)?.ToString() == rule.AndActorFieldValue.ToString());
         }
     }
 }

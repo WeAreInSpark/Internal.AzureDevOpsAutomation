@@ -37,7 +37,7 @@ namespace ADOStateChangeHTTPFunction
                 return new BadRequestObjectResult("Work item was not updated, yet the trigger somehow triggered. Ignoring request.");
             }
 
-            var adoEngine = new AdoProcessor(workItemRepo, rulesRepo, helper, logger);
+            var adoEngine = new AdoProcessor(workItemRepo, rulesRepo, logger);
 
             await adoEngine.ProcessUpdate(workItemRequest, functionAppCurrDirectory);
 

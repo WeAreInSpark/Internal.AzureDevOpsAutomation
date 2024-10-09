@@ -7,8 +7,10 @@ namespace AdoStateProcessor.Repos.Interfaces
     public interface IWorkItemRepo
     {
         Task<WorkItem> GetWorkItem(int id);
-        Task<List<WorkItem>> ListChildWorkItemsForParent(WorkItem parentWorkItem);
-        Task<WorkItem> UpdateWorkItemState(WorkItem workItem, string state);
-        Task<WorkItemRelation> GetWorkItemParent(int workItemId);
+        Task<List<WorkItem>> ListChildWorkItemsForParent(WorkItem parentWorkItem, string fieldName);
+        Task<WorkItem> UpdateWorkItem(WorkItem workItem, (string fieldName, string value) fieldSet);
+        Task<IEnumerable<WorkItemRelation>> GetWorkItemRelations(int workItemId, string workItemType);
+        Task<IEnumerable<WorkItem>> UpdateWorkItems(IEnumerable<WorkItem> workItems, (string fieldName, string value) fieldSet);
+        Task<List<WorkItem>> GetRelatedItems(List<WorkItemRelation> relevantRelations);
     }
 }

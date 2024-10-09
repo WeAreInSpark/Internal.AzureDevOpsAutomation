@@ -6,53 +6,72 @@ using AdoStateProcessor.Repos.Interfaces;
 using AdoStateProcessor.Misc;
 using AdoStateProcessor.ViewModels;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using Microsoft.Extensions.Options;
+using AdoStateProcessor.Models;
+using System.Collections.Generic;
+using AdoStateProcessor.Repos;
 
 namespace AdoStateProcessor.Processor
 {
     public class AdoProcessor(
         IWorkItemRepo workItemRepo,
         IRulesRepo rulesRepo,
-        IHelper helper,
         ILogger logger)
     {
         public async Task ProcessUpdate(WorkItemDto workItemRequest, string functionAppCurrDirectory)
         {
-            WorkItemRelation parentRelation = await workItemRepo.GetWorkItemParent(workItemRequest.WorkItemId);
+            var relevantRelations = (await workItemRepo.GetWorkItemRelations(workItemRequest.WorkItemId, workItemRequest.WorkItemType))?.ToList();
 
-            var parentId = helper.GetWorkItemIdFromUrl(parentRelation.Url);
-            var parentWorkItem = await workItemRepo.GetWorkItem(parentId) ?? throw new ApplicationException("Failed to get parent work item.");
-            var parentState = parentWorkItem.Fields["System.State"]?.ToString() ?? string.Empty;
+            if (relevantRelations.Count() == 0)
+            {
+                logger.LogInformation("No relevant relations found. Exiting.");
+                return;
+            }
+
+            List<WorkItem> relatedItems = await workItemRepo.GetRelatedItems(relevantRelations);
 
             var rulesModel = rulesRepo.LoadProcessTypeRules(workItemRequest.WorkItemType, functionAppCurrDirectory);
 
             foreach (var rule in rulesModel.Rules)
             {
-                logger.LogInformation(" Executing against rule:" + rule.IfChildState);
+                logger.LogInformation("Executing against rule:" + rule.IfActorFieldType + rule.AndActorFieldValue);
 
-                if (!rule.IfChildState.Equals(workItemRequest.State))
+                if (!IsMatchingRuleForWorkItem(workItemRequest, rule))
                 {
                     continue;
                 }
 
-                if (rule.AllChildren)
+                // Since we have a hierarchical one to many relation, only tasks can have multiple siblings that need to be checked for completion.
+                if (rule.IsAllActors && workItemRequest.WorkItemType == "Task")
                 {
-                    var childWorkItems = await workItemRepo.ListChildWorkItemsForParent(parentWorkItem);
+                    var actorWorkItems = await workItemRepo.ListChildWorkItemsForParent(relatedItems.First(), rule.IfActorFieldType.ToString());
 
-                    var isAllChildrenEqualStates = childWorkItems.All(x => x.Fields["System.State"].ToString() == rule.IfChildState);
+                    var isAllActorsEqualValues = actorWorkItems.All(x => x.Fields[$"System.{rule.IfActorFieldType}"].ToString() == rule.AndActorFieldValue);
 
-                    if (isAllChildrenEqualStates)
-                        await workItemRepo.UpdateWorkItemState(parentWorkItem, rule.SetParentStateTo);
-                }
-                else
-                {
-                    logger.LogInformation(" In !rule.AllChildren:" + workItemRequest.State);
-                    if (!rule.NotParentStates.Contains(parentState))
+                    if (isAllActorsEqualValues)
                     {
-                        await workItemRepo.UpdateWorkItemState(parentWorkItem, rule.SetParentStateTo);
+                        relatedItems = FilterExcludedEntries(relatedItems, rule).ToList();
+                        await workItemRepo.UpdateWorkItems(relatedItems, ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));
                     }
+
+                    continue;
                 }
+
+                logger.LogInformation(" In !rule.AllChildren:" + rule.IfActorFieldType + rule.AndActorFieldValue);
+
+                var includedRelatedItems = FilterExcludedEntries(relatedItems, rule);
+
+                await workItemRepo.UpdateWorkItems(includedRelatedItems, ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));
             }
+        }
+
+        private static IEnumerable<WorkItem> FilterExcludedEntries(List<WorkItem> relatedItems, Rule rule)
+        {
+            return relatedItems.Where(x => !rule.AndNotAffectedFieldValues.Contains(x.Fields[$"System.{rule.WhereAffectedFieldType}"]?.ToString()));
+        }
+
+        private static bool IsMatchingRuleForWorkItem(WorkItemDto workItemRequest, Rule rule)
+        {
+            return workItemRequest.GetType().GetProperties().Any(x => x.Name == rule.IfActorFieldType.ToString() && x.GetValue(workItemRequest).ToString() == rule.AndActorFieldValue.ToString());
         }
     }
 }

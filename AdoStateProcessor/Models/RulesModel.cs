@@ -1,25 +1,27 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace AdoStateProcessor.Models
 {
     public class RulesModel
     {
-        public string Type { get; set; }
+        public string ActorType { get; set; }
 
         public Rule[] Rules { get; set; }
     }
 
     public class Rule
     {
-        public string IfChildState { get; set; }
+        public string AffectedType { get; set; }
+        public WorkItemProperty IfActorFieldType { get; set; }
 
-        public WorkItemProperty WorkItemProperty { get; set; }
+        public string AndActorFieldValue { get; set; }
 
-        public string[] NotParentStates { get; set; }
+        public WorkItemProperty WhereAffectedFieldType { get; set; }
+        public string[] AndNotAffectedFieldValues { get; set; }
 
-        public string SetParentStateTo { get; set; }
+        public string SetAffectedFieldValueTo { get; set; }
 
-        public bool AllChildren { get; set; }
+        public bool IsAllActors { get; set; } = false;
     }
     public enum WorkItemProperty
     {

@@ -1,23 +1,21 @@
 {
-  "type": "Product Backlog Item",
+  "actorType": "Product Backlog Item",
   "rules": [
     {
-      "ifChildState": "Approved",
-      "notParentStates": [ "In Progress","Done","Removed" ],
-      "setParentStateTo": "In Progress",
-      "allChildren": false
+      "affectedType": "Task",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Committed",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [],
+      "setAffectedFieldValueTo": "Solutions\\Kanban"
     },
     {
-      "ifChildState": "Committed",
-      "notParentStates": [ "In Progress","Done","Removed" ],
-      "setParentStateTo": "In Progress",
-      "allChildren": false
-    },
-    {
-      "ifChildState": "Done",
-      "notParentStates": [ "In Progress","Done","Removed" ],
-      "setParentStateTo": "In Progress",
-      "allChildren": false
+      "affectedType": "Task",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Demo",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [],
+      "setAffectedFieldValueTo": "Solutions"
     }
   ]
 }

@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace AdoStateProcessor.Models
+﻿namespace AdoStateProcessor.Models
 {
     public class RulesModel
     {

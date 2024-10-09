@@ -1,7 +1,6 @@
-﻿using AdoStateProcessor.ViewModels;
+﻿using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using Microsoft.Extensions.Options;
 using System;
 
 namespace AdoStateProcessor.Factories

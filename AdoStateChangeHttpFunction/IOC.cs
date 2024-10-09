@@ -3,7 +3,6 @@ using AdoStateProcessor.Factories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-
 namespace AdoStateChangeHttpFunction
 {
     public static class IOC

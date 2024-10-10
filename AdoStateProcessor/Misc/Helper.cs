@@ -35,5 +35,9 @@ namespace AdoStateProcessor.Misc
         {
             return workItemRequest.GetType().GetProperties().Any(x => x.Name == rule.IfActorFieldType.ToString() && x.GetValue(workItemRequest)?.ToString() == rule.AndActorFieldValue.ToString());
         }
+        public static bool IsAllActorsEqualValues(Rule rule, List<WorkItem> actorWorkItems)
+        {
+            return actorWorkItems.All(x => x.Fields[$"System.{rule.IfActorFieldType}"].ToString() == rule.AndActorFieldValue);
+        }
     }
 }

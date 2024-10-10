@@ -4,7 +4,6 @@ using AdoStateProcessor.Repos.Interfaces;
 using AdoStateProcessor.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -51,9 +50,7 @@ namespace AdoStateProcessor.Processor
                 {
                     var actorWorkItems = await workItemRepo.ListChildWorkItemsForParent(relatedItems.First(), rule.IfActorFieldType.ToString());
 
-                    var isAllActorsEqualValues = actorWorkItems.All(x => x.Fields[$"System.{rule.IfActorFieldType}"].ToString() == rule.AndActorFieldValue);
-
-                    if (isAllActorsEqualValues)
+                    if (Helper.IsAllActorsEqualValues(rule, actorWorkItems))
                     {
                         relatedItems = Helper.FilterExcludedEntries(relatedItems, rule).ToList();
                         await workItemRepo.UpdateWorkItems(relatedItems, ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));

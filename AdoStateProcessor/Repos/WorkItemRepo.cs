@@ -1,7 +1,6 @@
-﻿using AdoStateProcessor.Factories;
+using AdoStateProcessor.Factories;
 using AdoStateProcessor.Misc;
 using AdoStateProcessor.Repos.Interfaces;
-using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.WebApi;

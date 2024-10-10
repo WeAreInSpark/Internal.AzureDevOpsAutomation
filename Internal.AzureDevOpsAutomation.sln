@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdoStateChangeHttpFunction"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdoStateProcessor", "AdoStateProcessor\AdoStateProcessor.csproj", "{6224C484-3E23-4F06-A749-195C1E478111}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Internal.AzureDevOpsAutomation.UnitTests", "Internal.AzureDevOpsAutomation.UnitTests\Internal.AzureDevOpsAutomation.UnitTests.csproj", "{2AF4546E-526A-411D-A9CA-740163014CB7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6224C484-3E23-4F06-A749-195C1E478111}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6224C484-3E23-4F06-A749-195C1E478111}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6224C484-3E23-4F06-A749-195C1E478111}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AF4546E-526A-411D-A9CA-740163014CB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AF4546E-526A-411D-A9CA-740163014CB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AF4546E-526A-411D-A9CA-740163014CB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AF4546E-526A-411D-A9CA-740163014CB7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -27,13 +27,19 @@ namespace AdoStateProcessor.Processor
 
             List<WorkItem> relatedItems = await workItemRepo.GetRelatedItems(relevantRelations);
 
+            if (relatedItems.Count() == 0)
+            {
+                logger.LogInformation("No related items found. Exiting.");
+                return;
+            }
+
             var rulesModel = rulesRepo.LoadProcessTypeRules(workItemRequest.WorkItemType, functionAppCurrDirectory);
 
             foreach (var rule in rulesModel.Rules)
             {
                 logger.LogInformation("Executing against rule:" + rule.IfActorFieldType + rule.AndActorFieldValue);
 
-                if (!IsMatchingRuleForWorkItem(workItemRequest, rule))
+                if (!IsMatchingRuleForWorkItem(workItemRequest, rule) || !IsAffectedWorkItemTypeMatching(relatedItems.First(), rule))
                 {
                     continue;
                 }
@@ -60,6 +66,11 @@ namespace AdoStateProcessor.Processor
 
                 await workItemRepo.UpdateWorkItems(includedRelatedItems, ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));
             }
+        }
+
+        private bool IsAffectedWorkItemTypeMatching(WorkItem affectedItem, Rule rule)
+        {
+            return rule.AffectedType == affectedItem.Fields["System.WorkItemType"].ToString();
         }
 
         private static IEnumerable<WorkItem> FilterExcludedEntries(List<WorkItem> relatedItems, Rule rule)

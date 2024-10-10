@@ -1,119 +1,97 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
-using Microsoft.VisualStudio.Services.WebApi.Patch;
+using AdoStateProcessor.Factories;
+using AdoStateProcessor.Misc;
+using AdoStateProcessor.Repos.Interfaces;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.WebApi;
-
-using AdoStateProcessor.Misc;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
+using Microsoft.VisualStudio.Services.WebApi.Patch;
+using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using AdoStateProcessor.Repos.Interfaces;
 
 namespace AdoStateProcessor.Repos
 {
-    public class WorkItemRepo : IWorkItemRepo, IDisposable
+    public class WorkItemRepo(IAdoFactory adoFactory) : IWorkItemRepo
     {
-        private IHelper _helper;
+        private readonly IVssConnection _connection = adoFactory.Create();
 
-        public WorkItemRepo(IHelper helper)
+        public async Task<WorkItem> GetWorkItem(int id)
         {
-            _helper = helper;
-        }
-
-        public async Task<WorkItem> GetWorkItem(VssConnection connection, int id)
-        {
-            var client = connection.GetClient<WorkItemTrackingHttpClient>();
+            var client = _connection.GetClient<WorkItemTrackingHttpClient>();
             try
             {
                 return await client.GetWorkItemAsync(id, null, null, WorkItemExpand.Relations);
-
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("Exception e:"+ e.GetBaseException());
                 return null;
             }
         }
 
-        public async Task<List<WorkItem>> ListChildWorkItemsForParent(VssConnection connection, WorkItem parentWorkItem)
+        public async Task<List<WorkItem>> ListChildWorkItemsForParent(WorkItem parentWorkItem, string fieldName)
         {
-            var client = connection.GetClient<WorkItemTrackingHttpClient>();
+            var client = _connection.GetClient<WorkItemTrackingHttpClient>();
 
-            // get all the related child work item links
-            IEnumerable<WorkItemRelation> children = parentWorkItem.Relations.Where<WorkItemRelation>(x => x.Rel.Equals("System.LinkTypes.Hierarchy-Forward"));
-            IList<int> Ids = new List<int>();
+            var childrenIds = parentWorkItem.Relations.Where(x => x.Rel.Equals("System.LinkTypes.Hierarchy-Forward"))
+                                            .Select(x => Helper.GetWorkItemIdFromUrl(x.Url)).ToList();
 
-            // loop through children and extract the id's the from the url
-            foreach (var child in children)
-            {
-                Ids.Add(_helper.GetWorkItemIdFromUrl(child.Url));
-            }
+            string[] fields = [$"System.{fieldName}"];
 
-            // in this case we only care about the state of the child work items
-            string[] fields = new string[] { "System.State" };
-
-            // go get the full list of child work items with the desired fields
-            return await client.GetWorkItemsAsync(Ids, fields);
+            return await client.GetWorkItemsAsync(childrenIds, fields);
         }
 
-        public async Task<WorkItem> UpdateWorkItemState(VssConnection connection, WorkItem workItem, string state)
+        public async Task<WorkItem> UpdateWorkItem(WorkItem workItem, (string fieldName, string value) fieldSet)
         {
-            JsonPatchDocument patchDocument = new JsonPatchDocument();
-            patchDocument.Add(
+            JsonPatchDocument patchDocument =
+            [
                 new JsonPatchOperation()
                 {
                     Operation = Operation.Test,
                     Path = "/rev",
                     Value = workItem.Rev.ToString()
-                }
-            );
-
-            patchDocument.Add(
+                },
                 new JsonPatchOperation()
                 {
                     Operation = Operation.Add,
-                    Path = "/fields/System.State",
-                    Value = state
+                    Path = $"/fields/{fieldSet.fieldName}",
+                    Value = fieldSet.value
                 }
-            );
+            ];
 
-            WorkItem result = null;
-
-            var client = connection.GetClient<WorkItemTrackingHttpClient>();
             try
             {
-                result = await client.UpdateWorkItemAsync(patchDocument, Convert.ToInt32(workItem.Id));
+                var client = _connection.GetClient<WorkItemTrackingHttpClient>();
+                return await client.UpdateWorkItemAsync(patchDocument, workItem.Id.Value);
             }
             catch (Exception)
             {
-                result = null;
+                return null;
             }
-            return result;
         }
 
-        public void Dispose()
+        public async Task<IEnumerable<WorkItem>> UpdateWorkItems(IEnumerable<WorkItem> workItems, (string fieldName, string value) fieldSet)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            return await Task.WhenAll(workItems.Select(item => UpdateWorkItem(item, fieldSet)));
         }
 
-        ~WorkItemRepo()
+        public async Task<IEnumerable<WorkItemRelation>> GetWorkItemRelations(int workItemId, string workItemType)
         {
-            // Finalizer calls Dispose(false)
-            Dispose(false);
+            var workItem = await GetWorkItem(workItemId) ?? throw new ApplicationException("Failed to get work item.");
+
+            // For simplicity we are assuming that we're either dealing with Tasks or PBI's/Bugs
+            var hierarchyDirection = workItemType == "Task" ? "System.LinkTypes.Hierarchy-Reverse" : "System.LinkTypes.Hierarchy-Forward";
+
+            return workItem.Relations.Where(x => x.Rel.Equals(hierarchyDirection));
         }
 
-        protected virtual void Dispose(bool disposing)
+        public async Task<List<WorkItem>> GetRelatedItems(List<WorkItemRelation> relevantRelations)
         {
-            if (disposing)
-            {
-                _helper = null;
-            }
+            var relatedUris = relevantRelations.Select(x => Helper.GetWorkItemIdFromUrl(x.Url));
+
+            var relatedItems = (await Task.WhenAll(relatedUris.Select(GetWorkItem)))?.Where(result => result != null).ToList();
+            return relatedItems;
         }
     }
-
-
 }

@@ -1,5 +1,5 @@
 {
-  "actorType": "Product Backlog Item",
+  "actorType": "Bug",
   "rules": [
     {
       "affectedType": "Task",

@@ -2,22 +2,54 @@
   "type": "Task",
   "rules": [
     {
-      "ifChildState": "Active",
-      "notParentStates": [ "Active", "Resolved" ],
-      "setParentStateTo": "Active",
-      "allChildren": false
+      "affectedType": "Product Backlog Item",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Done",
+      "whereAffectedFieldType": "State",
+      "andNotAffectedFieldValues": [ "Demo" ],
+      "setAffectedFieldValueTo": "Demo",
+      "isAllActors": true
     },
     {
-      "ifChildState": "New",
-      "notParentStates": [ "Active", "Resolved", "New" ],
-      "setParentStateTo": "Active",
-      "allChildren": false
+      "affectedType": "Bug",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Done",
+      "whereAffectedFieldType": "State",
+      "andNotAffectedFieldValues": [ "Demo" ],
+      "setAffectedFieldValueTo": "Demo",
+      "isAllActors": true
     },
     {
-      "ifChildState": "Done",
-      "notParentStates": [],
-      "setParentStateTo": "Demo",
-      "allChildren": true
+      "affectedType": "Product Backlog Item",
+      "ifActorFieldType": "IterationPath",
+      "andActorFieldValue": "Solutions\\Kanban",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [ "Solutions\\Kanban" ],
+      "setAffectedFieldValueTo": "Solutions\\Kanban"
+    },
+    {
+      "affectedType": "Product Backlog Item",
+      "ifActorFieldType": "IterationPath",
+      "andActorFieldValue": "Solutions",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [ "Solutions" ],
+      "setAffectedFieldValueTo": "Solutions"
+    },
+    {
+      "affectedType": "Bug",
+      "ifActorFieldType": "IterationPath",
+      "andActorFieldValue": "Solutions\\Kanban",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [ "Solutions\\Kanban" ],
+      "setAffectedFieldValueTo": "Solutions\\Kanban"
+    },
+    {
+      "affectedType": "Bug",
+      "ifActorFieldType": "IterationPath",
+      "andActorFieldValue": "Solutions",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [ "Solutions" ],
+      "setAffectedFieldValueTo": "Solutions"
     }
   ]
 }

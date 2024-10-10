@@ -1,5 +1,4 @@
 ﻿using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
-using Microsoft.VisualStudio.Services.WebApi;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -7,8 +6,11 @@ namespace AdoStateProcessor.Repos.Interfaces
 {
     public interface IWorkItemRepo
     {
-        Task<WorkItem> GetWorkItem(VssConnection connection, int id);
-        Task<List<WorkItem>> ListChildWorkItemsForParent(VssConnection connection, WorkItem parentWorkItem);
-        Task<WorkItem> UpdateWorkItemState(VssConnection connection, WorkItem workItem, string state);
+        Task<WorkItem> GetWorkItem(int id);
+        Task<List<WorkItem>> ListChildWorkItemsForParent(WorkItem parentWorkItem, string fieldName);
+        Task<WorkItem> UpdateWorkItem(WorkItem workItem, (string fieldName, string value) fieldSet);
+        Task<IEnumerable<WorkItemRelation>> GetWorkItemRelations(int workItemId, string workItemType);
+        Task<IEnumerable<WorkItem>> UpdateWorkItems(IEnumerable<WorkItem> workItems, (string fieldName, string value) fieldSet);
+        Task<List<WorkItem>> GetRelatedItems(List<WorkItemRelation> relevantRelations);
     }
 }

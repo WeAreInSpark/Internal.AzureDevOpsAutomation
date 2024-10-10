@@ -268,3 +268,6 @@ __pycache__/
 
 #Sonarqube files
 .sonarqube
+AdoStateChangeHttpFunction/Properties/PublishProfiles/
+
+AdoStateChangeHttpFunction/Properties/

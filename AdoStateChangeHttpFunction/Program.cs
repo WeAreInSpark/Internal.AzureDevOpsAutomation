@@ -22,7 +22,6 @@ var host = new HostBuilder()
         services.AddAdoClientFactory(hostBuilderContext.Configuration);
         services.AddSingleton<IWorkItemRepo, WorkItemRepo>();
         services.AddSingleton<IRulesRepo, RulesRepo>();
-        services.AddSingleton<IHelper, Helper>();
     })
     .Build();
 

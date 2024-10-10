@@ -1,3 +1,4 @@
+using AdoStateProcessor.Misc;
 using AdoStateProcessor.Models;
 using AdoStateProcessor.Repos.Interfaces;
 using AdoStateProcessor.ViewModels;
@@ -39,8 +40,9 @@ namespace AdoStateProcessor.Processor
             {
                 logger.LogInformation("Executing against rule:" + rule.IfActorFieldType + rule.AndActorFieldValue);
 
-                if (!IsMatchingRuleForWorkItem(workItemRequest, rule) || !IsAffectedWorkItemTypeMatching(relatedItems.First(), rule))
+                if (!Helper.IsMatchingRuleForWorkItem(workItemRequest, rule) || !Helper.IsAffectedWorkItemTypeMatching(relatedItems.First(), rule))
                 {
+                    logger.LogInformation("Rule not matching. Skipping.");
                     continue;
                 }
 
@@ -53,7 +55,7 @@ namespace AdoStateProcessor.Processor
 
                     if (isAllActorsEqualValues)
                     {
-                        relatedItems = FilterExcludedEntries(relatedItems, rule).ToList();
+                        relatedItems = Helper.FilterExcludedEntries(relatedItems, rule).ToList();
                         await workItemRepo.UpdateWorkItems(relatedItems, ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));
                     }
 
@@ -62,25 +64,11 @@ namespace AdoStateProcessor.Processor
 
                 logger.LogInformation(" In !rule.AllChildren:" + rule.IfActorFieldType + rule.AndActorFieldValue);
 
-                var includedRelatedItems = FilterExcludedEntries(relatedItems, rule);
+                var includedRelatedItems = Helper.FilterExcludedEntries(relatedItems, rule);
 
                 await workItemRepo.UpdateWorkItems(includedRelatedItems, ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));
             }
         }
-
-        private bool IsAffectedWorkItemTypeMatching(WorkItem affectedItem, Rule rule)
-        {
-            return rule.AffectedType == affectedItem.Fields["System.WorkItemType"].ToString();
-        }
-
-        private static IEnumerable<WorkItem> FilterExcludedEntries(List<WorkItem> relatedItems, Rule rule)
-        {
-            return relatedItems.Where(x => !rule.AndNotAffectedFieldValues.Contains(x.Fields[$"System.{rule.WhereAffectedFieldType}"]?.ToString()));
-        }
-
-        private static bool IsMatchingRuleForWorkItem(WorkItemDto workItemRequest, Rule rule)
-        {
-            return workItemRequest.GetType().GetProperties().Any(x => x.Name == rule.IfActorFieldType.ToString() && x.GetValue(workItemRequest)?.ToString() == rule.AndActorFieldValue.ToString());
         }
     }
 }

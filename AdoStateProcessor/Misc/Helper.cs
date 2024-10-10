@@ -1,10 +1,15 @@
-﻿using System;
+﻿using AdoStateProcessor.Models;
+using AdoStateProcessor.ViewModels;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AdoStateProcessor.Misc
 {
-    public class Helper : IHelper
+    public class Helper
     {
-        public int GetWorkItemIdFromUrl(string url)
+        public static int GetWorkItemIdFromUrl(string url)
         {
             int lastIndexOf = url.LastIndexOf("/");
             int size = url.Length - (lastIndexOf + 1);
@@ -15,6 +20,20 @@ namespace AdoStateProcessor.Misc
                 throw new ArgumentException("Invalid work item id");
 
             return workItemId;
+        }
+        public static bool IsAffectedWorkItemTypeMatching(WorkItem affectedItem, Rule rule)
+        {
+            return rule.AffectedType == affectedItem.Fields["System.WorkItemType"].ToString();
+        }
+
+        public static IEnumerable<WorkItem> FilterExcludedEntries(List<WorkItem> relatedItems, Rule rule)
+        {
+            return relatedItems.Where(x => !rule.AndNotAffectedFieldValues.Contains(x.Fields[$"System.{rule.WhereAffectedFieldType}"]?.ToString()));
+        }
+
+        public static bool IsMatchingRuleForWorkItem(WorkItemDto workItemRequest, Rule rule)
+        {
+            return workItemRequest.GetType().GetProperties().Any(x => x.Name == rule.IfActorFieldType.ToString() && x.GetValue(workItemRequest)?.ToString() == rule.AndActorFieldValue.ToString());
         }
     }
 }

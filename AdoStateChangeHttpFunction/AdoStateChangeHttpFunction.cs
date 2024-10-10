@@ -17,7 +17,6 @@ namespace ADOStateChangeHTTPFunction
     public class AdoStateChangeHttpFunction(
         IWorkItemRepo workItemRepo,
         IRulesRepo rulesRepo,
-        IHelper helper,
         ILogger<AdoStateChangeHttpFunction> logger)
     {
         [Function("AdoStateChangeHttpFunction")]

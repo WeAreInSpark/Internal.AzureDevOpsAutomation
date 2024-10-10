@@ -1,6 +1,7 @@
 ﻿using AdoStateProcessor.Factories;
 using AdoStateProcessor.Misc;
 using AdoStateProcessor.Repos.Interfaces;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace AdoStateProcessor.Repos
 {
-    public class WorkItemRepo(IAdoFactory adoFactory, IHelper helper) : IWorkItemRepo
+    public class WorkItemRepo(IAdoFactory adoFactory) : IWorkItemRepo
     {
         private readonly IVssConnection _connection = adoFactory.Create();
 
@@ -26,7 +27,6 @@ namespace AdoStateProcessor.Repos
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception e:" + e.GetBaseException());
                 return null;
             }
         }
@@ -36,7 +36,7 @@ namespace AdoStateProcessor.Repos
             var client = _connection.GetClient<WorkItemTrackingHttpClient>();
 
             var childrenIds = parentWorkItem.Relations.Where(x => x.Rel.Equals("System.LinkTypes.Hierarchy-Forward"))
-                                            .Select(x => helper.GetWorkItemIdFromUrl(x.Url)).ToList();
+                                            .Select(x => Helper.GetWorkItemIdFromUrl(x.Url)).ToList();
 
             string[] fields = [$"System.{fieldName}"];
 
@@ -89,7 +89,7 @@ namespace AdoStateProcessor.Repos
 
         public async Task<List<WorkItem>> GetRelatedItems(List<WorkItemRelation> relevantRelations)
         {
-            var relatedUris = relevantRelations.Select(x => helper.GetWorkItemIdFromUrl(x.Url));
+            var relatedUris = relevantRelations.Select(x => Helper.GetWorkItemIdFromUrl(x.Url));
 
             var relatedItems = (await Task.WhenAll(relatedUris.Select(GetWorkItem)))?.Where(result => result != null).ToList();
             return relatedItems;

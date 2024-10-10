@@ -6,7 +6,15 @@
       "ifActorFieldType": "State",
       "andActorFieldValue": "Done",
       "whereAffectedFieldType": "State",
-      "andNotAffectedFieldValues": [],
+      "andNotAffectedFieldValues": [ "Demo" ],
+      "setAffectedFieldValueTo": "Demo"
+    },
+    {
+      "affectedType": "Bug",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Done",
+      "whereAffectedFieldType": "State",
+      "andNotAffectedFieldValues": [ "Demo" ],
       "setAffectedFieldValueTo": "Demo"
     },
     {
@@ -14,7 +22,7 @@
       "ifActorFieldType": "IterationPath",
       "andActorFieldValue": "Solutions\\Kanban",
       "whereAffectedFieldType": "IterationPath",
-      "andNotAffectedFieldValues": [],
+      "andNotAffectedFieldValues": [ "Solutions\\Kanban" ],
       "setAffectedFieldValueTo": "Solutions\\Kanban"
     },
     {
@@ -22,7 +30,7 @@
       "ifActorFieldType": "IterationPath",
       "andActorFieldValue": "Solutions",
       "whereAffectedFieldType": "IterationPath",
-      "andNotAffectedFieldValues": [],
+      "andNotAffectedFieldValues": [ "Solutions" ],
       "setAffectedFieldValueTo": "Solutions"
     }
   ]

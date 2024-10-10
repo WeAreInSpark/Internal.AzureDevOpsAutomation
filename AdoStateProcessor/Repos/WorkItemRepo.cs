@@ -91,7 +91,7 @@ namespace AdoStateProcessor.Repos
         {
             var relatedUris = relevantRelations.Select(x => helper.GetWorkItemIdFromUrl(x.Url));
 
-            var relatedItems = (await Task.WhenAll(relatedUris.Select(GetWorkItem))).Where(result => result != null).ToList();
+            var relatedItems = (await Task.WhenAll(relatedUris.Select(GetWorkItem)))?.Where(result => result != null).ToList();
             return relatedItems;
         }
     }

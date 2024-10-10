@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -37,11 +38,17 @@ namespace ADOStateChangeHTTPFunction
 
             var adoEngine = new AdoProcessor(workItemRepo, rulesRepo, logger);
 
-            await adoEngine.ProcessUpdate(workItemRequest, functionAppCurrDirectory);
+            try
+            {
+                await adoEngine.ProcessUpdate(workItemRequest, functionAppCurrDirectory);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while processing the work item.");
+                return new BadRequestObjectResult($"An error occurred while processing the work item. {ex.Message}");
+            }
 
-            string responseMessage = "This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
+            return new OkObjectResult("This HTTP triggered function executed successfully.");
         }
     }
 }

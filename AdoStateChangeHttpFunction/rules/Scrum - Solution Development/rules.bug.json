@@ -1,0 +1,21 @@
+{
+  "actorType": "Bug",
+  "rules": [
+    {
+      "affectedType": "Task",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Committed",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [],
+      "setAffectedFieldValueTo": "Solutions\\Kanban"
+    },
+    {
+      "affectedType": "Task",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Demo",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [],
+      "setAffectedFieldValueTo": "Solutions"
+    }
+  ]
+}

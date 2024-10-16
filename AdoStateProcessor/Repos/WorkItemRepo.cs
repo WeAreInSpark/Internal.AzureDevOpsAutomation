@@ -76,10 +76,8 @@ namespace AdoStateProcessor.Repos
             return await Task.WhenAll(workItems.Select(item => UpdateWorkItem(item, fieldSet)));
         }
 
-        public async Task<IEnumerable<WorkItemRelation>> GetWorkItemRelations(int workItemId, string workItemType)
+        public IEnumerable<WorkItemRelation> GetWorkItemRelations(WorkItem workItem, string workItemType)
         {
-            var workItem = await GetWorkItem(workItemId) ?? throw new ApplicationException("Failed to get work item.");
-
             // For simplicity we are assuming that we're either dealing with Tasks or PBI's/Bugs
             var hierarchyDirection = workItemType == "Task" ? "System.LinkTypes.Hierarchy-Reverse" : "System.LinkTypes.Hierarchy-Forward";
 

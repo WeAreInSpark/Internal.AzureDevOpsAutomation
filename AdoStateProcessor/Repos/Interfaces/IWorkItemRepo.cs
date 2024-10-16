@@ -9,7 +9,7 @@ namespace AdoStateProcessor.Repos.Interfaces
         Task<WorkItem> GetWorkItem(int id);
         Task<List<WorkItem>> ListChildWorkItemsForParent(WorkItem parentWorkItem, string fieldName);
         Task<WorkItem> UpdateWorkItem(WorkItem workItem, (string fieldName, string value) fieldSet);
-        Task<IEnumerable<WorkItemRelation>> GetWorkItemRelations(int workItemId, string workItemType);
+        IEnumerable<WorkItemRelation> GetWorkItemRelations(WorkItem workItem, string workItemType);
         Task<IEnumerable<WorkItem>> UpdateWorkItems(IEnumerable<WorkItem> workItems, (string fieldName, string value) fieldSet);
         Task<List<WorkItem>> GetRelatedItems(List<WorkItemRelation> relevantRelations);
     }

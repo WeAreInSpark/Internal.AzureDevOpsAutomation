@@ -3,10 +3,11 @@ using AdoStateProcessor.Models;
 using AdoStateProcessor.Repos.Interfaces;
 using AdoStateProcessor.ViewModels;
 using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WorkItem = Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem;
 
 namespace AdoStateProcessor.Processor
 {
@@ -17,7 +18,8 @@ namespace AdoStateProcessor.Processor
     {
         public async Task ProcessUpdate(WorkItemDto workItemRequest, string functionAppCurrDirectory)
         {
-            var relevantRelations = (await workItemRepo.GetWorkItemRelations(workItemRequest.WorkItemId, workItemRequest.WorkItemType))?.ToList();
+            var workItem = await workItemRepo.GetWorkItem(workItemRequest.WorkItemId) ?? throw new ApplicationException("Failed to get work item.");
+            var relevantRelations = workItemRepo.GetWorkItemRelations(workItem, workItemRequest.WorkItemType)?.ToList();
 
             if (relevantRelations.Count() == 0)
             {
@@ -35,13 +37,26 @@ namespace AdoStateProcessor.Processor
 
             var rulesModel = rulesRepo.LoadProcessTypeRules(workItemRequest.WorkItemType, functionAppCurrDirectory);
 
+            await ExecuteRules(workItemRequest, workItem, relatedItems, rulesModel);
+        }
+
+        private async Task ExecuteRules(WorkItemDto workItemRequest, WorkItem workItem, List<WorkItem> relatedItems, RulesModel rulesModel)
+        {
             foreach (var rule in rulesModel.Rules)
             {
                 logger.LogInformation("Executing against rule:" + rule.IfActorFieldType + rule.AndActorFieldValue);
 
-                if (!Helper.IsMatchingRuleForWorkItem(workItemRequest, rule) || !Helper.IsAffectedWorkItemTypeMatching(relatedItems.First(), rule))
+                var isAffectingSelf = rulesModel.ActorType == rule.AffectedType;
+
+                if (!Helper.IsMatchingRuleForWorkItem(workItemRequest, rule) || !Helper.IsAffectedWorkItemTypeMatching(isAffectingSelf ? workItem : relatedItems.First(), rule))
                 {
                     logger.LogInformation("Rule not matching. Skipping.");
+                    continue;
+                }
+
+                if (isAffectingSelf)
+                {
+                    await workItemRepo.UpdateWorkItems([workItem], ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));
                     continue;
                 }
 
@@ -65,7 +80,6 @@ namespace AdoStateProcessor.Processor
 
                 await workItemRepo.UpdateWorkItems(includedRelatedItems, ($"System.{rule.WhereAffectedFieldType}", rule.SetAffectedFieldValueTo));
             }
-        }
         }
     }
 }

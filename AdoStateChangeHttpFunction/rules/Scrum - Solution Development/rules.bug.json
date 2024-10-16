@@ -16,6 +16,22 @@
       "whereAffectedFieldType": "IterationPath",
       "andNotAffectedFieldValues": [],
       "setAffectedFieldValueTo": "Solutions"
+    },
+    {
+      "affectedType": "Bug",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Committed",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [ "Solutions\\Kanban" ],
+      "setAffectedFieldValueTo": "Solutions\\Kanban"
+    },
+    {
+      "affectedType": "Bug",
+      "ifActorFieldType": "State",
+      "andActorFieldValue": "Demo",
+      "whereAffectedFieldType": "IterationPath",
+      "andNotAffectedFieldValues": [ "Solutions" ],
+      "setAffectedFieldValueTo": "Solutions"
     }
   ]
 }

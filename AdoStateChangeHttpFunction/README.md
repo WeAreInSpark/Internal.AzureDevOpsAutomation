@@ -5,6 +5,8 @@ Deze applicatie is geforked van een publieke [GitHub Repo](https://github.com/bb
 Deze applicatie is een Azure Function die automatisch de velden van een work item in Azure DevOps aanpast op basis van de status van de child work items of vice versa.
 Op het moment ondersteund de applicatie voornamelijk de velden State en Iteration Path, maar in feite kan elk veld aangepast worden.
 
+**LET OP: De rules engine let momenteel niet op cyclic references. Dus je bent zelf verantwoordelijk voor het voorkomen van infinite loops in de rule files.**
+
 ## Architectuur
  ![](./media/architecture-diagram.png)
 
@@ -27,7 +29,7 @@ Op het moment ondersteund de applicatie voornamelijk de velden State en Iteratio
 
    ![](./media/web-hooks-1.png)
 
-* Vul het URL-veld in met de URL van de geïmplementeerde function app en selecteer de onderstaande eigenschappen:
+* Vul het URL-veld in met de URL van de geÃ¯mplementeerde function app en selecteer de onderstaande eigenschappen:
     - Resourcegegevens om te verzenden: Alles
     - Berichten om te verzenden: Alles
     - Gedetailleerde berichten om te verzenden: Alles
@@ -47,7 +49,7 @@ Op het moment ondersteund de applicatie voornamelijk de velden State en Iteratio
      - **`affectedType`**: Work Item type dat reageert op de status van de actor
      - **`ifActorFieldType`** Het veldtype van het work item dat de actie in gang zet
      - **`andActorFieldValue`** De waarde van het veldtype van het work item dat de actie in gang zet
-     - **`whereAffectedFieldType`** Het veldtype van het work item dat wordt beïnvloed
-     - **`andNotAffectedFieldValues`** De waarden die uitsluiten dat het werkitem wordt beïnvloed
-     - **`setAffectedFieldValueTo`** De waarde die moet worden ingesteld voor het veldtype van het work item dat wordt beïnvloed
+     - **`whereAffectedFieldType`** Het veldtype van het work item dat wordt beÃ¯nvloed
+     - **`andNotAffectedFieldValues`** De waarden die uitsluiten dat het werkitem wordt beÃ¯nvloed
+     - **`setAffectedFieldValueTo`** De waarde die moet worden ingesteld voor het veldtype van het work item dat wordt beÃ¯nvloed
      - **`IsAllActors`** Als dit veld is ingesteld op `true`, wordt de alleen uitgevoerd als alle siblings van de actor aan dezelfde voorwaarde voeldoen.`

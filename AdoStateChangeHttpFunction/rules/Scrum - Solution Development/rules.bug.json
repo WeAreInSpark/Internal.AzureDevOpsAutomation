@@ -12,7 +12,7 @@
     {
       "affectedType": "Task",
       "ifActorFieldType": "State",
-      "andActorFieldValue": "Demo",
+      "andActorFieldValue": "Done",
       "whereAffectedFieldType": "IterationPath",
       "andNotAffectedFieldValues": [],
       "setAffectedFieldValueTo": "Solutions"
@@ -28,7 +28,7 @@
     {
       "affectedType": "Bug",
       "ifActorFieldType": "State",
-      "andActorFieldValue": "Demo",
+      "andActorFieldValue": "Done",
       "whereAffectedFieldType": "IterationPath",
       "andNotAffectedFieldValues": [ "Solutions" ],
       "setAffectedFieldValueTo": "Solutions"

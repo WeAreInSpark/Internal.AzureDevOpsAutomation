@@ -6,8 +6,8 @@
       "ifActorFieldType": "State",
       "andActorFieldValue": "Done",
       "whereAffectedFieldType": "State",
-      "andNotAffectedFieldValues": [ "Demo" ],
-      "setAffectedFieldValueTo": "Demo",
+      "andNotAffectedFieldValues": [ "Done" ],
+      "setAffectedFieldValueTo": "Done",
       "isAllActors": true
     },
     {
@@ -15,8 +15,8 @@
       "ifActorFieldType": "State",
       "andActorFieldValue": "Done",
       "whereAffectedFieldType": "State",
-      "andNotAffectedFieldValues": [ "Demo" ],
-      "setAffectedFieldValueTo": "Demo",
+      "andNotAffectedFieldValues": [ "Done" ],
+      "setAffectedFieldValueTo": "Done",
       "isAllActors": true
     }
   ]
